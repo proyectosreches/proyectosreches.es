@@ -3,11 +3,12 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Carga todas las variables de entorno, incluyendo la API_KEY
+  // Carga variables desde archivos .env si existen
   const env = loadEnv(mode, process.cwd(), '');
   
-  // Buscar la API Key en varias variables posibles para asegurar compatibilidad
-  const apiKey = env.API_KEY || env.VITE_API_KEY || process.env.API_KEY;
+  // Intenta obtener la API KEY de todas las fuentes posibles
+  // Prioridad: Variable de sistema > Variable en .env > Variable VITE_ en .env
+  const apiKey = process.env.API_KEY || env.API_KEY || env.VITE_API_KEY || '';
 
   return {
     plugins: [react()],
@@ -20,7 +21,8 @@ export default defineConfig(({ mode }) => {
       host: true
     },
     base: '/',
-    // Define process.env.API_KEY globalmente con la clave encontrada
+    // Define process.env.API_KEY globalmente reemplazándolo por el valor string
+    // Esto hace que en el código del navegador process.env.API_KEY sea igual a "tu_clave"
     define: {
       'process.env.API_KEY': JSON.stringify(apiKey)
     }
