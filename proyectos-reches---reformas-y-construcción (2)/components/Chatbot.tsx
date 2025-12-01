@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, Calendar, ChevronRight, Loader2, AlertTriangle } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Calendar, ChevronRight, Loader2, AlertTriangle, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI, Content } from "@google/genai";
 
@@ -8,23 +8,20 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyc9Z7_Is7Kxx
 
 // System instruction for the AI
 const SYSTEM_INSTRUCTION = `
-Eres el asistente virtual inteligente de "Proyectos Reches". Tu tono es profesional, cercano y experto en construcción y reformas.
-Tu objetivo es ayudar a clientes potenciales respondiendo dudas sobre los servicios de la empresa y guiarlos para pedir un presupuesto.
+Eres el asistente virtual de "Proyectos Reches".
+OBJETIVO: Responder dudas sobre la empresa y conseguir citas.
 
-INFORMACIÓN DE LA EMPRESA:
-- Nombre: Proyectos Reches
-- Experiencia: +16 años en el sector, +1500 proyectos realizados, +785 para empresas.
-- Ubicación: Carrer de Dante Alighieri 133, Horta-Guinardó, 08032 Barcelona.
-- Contacto: Teléfono +34 667 08 54 43, Email proyectosreches@gmail.com.
-- Horario de atención: Lunes a Viernes de 9:00 a 18:00.
+DATOS CLAVE:
+- Ubicación: Carrer de Dante Alighieri 133, 08032 Barcelona.
+- Horario: L-V 9:00 a 18:00.
+- Teléfono: 667 08 54 43.
+- Email: proyectosreches@gmail.com.
+- Servicios: Reformas Integrales, Climatización, Electricidad, Albañilería, Fontanería.
 
-SERVICIOS: Reformas Integrales, Climatización, Electricidad, Albañilería, Fontanería, Mantenimiento.
-
-REGLAS:
-- Sé conciso en respuestas generales (máximo 3-4 frases).
-- Si usas "thinking mode" para preguntas complejas, resume la conclusión final para el usuario.
-- Si preguntan precios: "Cada proyecto es único, pide presupuesto gratuito".
-- Si el usuario muestra interés claro en contratar o agendar, anímalo a usar la palabra "cita" o "reunión" para gestionar su reserva.
+COMPORTAMIENTO:
+- Respuestas cortas y directas.
+- Si preguntan precios: "Depende del proyecto, pide cita para presupuesto gratuito".
+- Anima siempre a agendar una cita.
 `;
 
 interface Message {
@@ -32,7 +29,7 @@ interface Message {
   role: 'user' | 'model';
   text: string;
   time?: string;
-  type?: 'text' | 'button' | 'error';
+  type?: 'text' | 'button' | 'error' | 'info';
   actionUrl?: string;
   actionLabel?: string;
 }
@@ -56,7 +53,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
     { 
       id: 'welcome', 
       role: 'model', 
-      text: '¡Hola! 👋 Soy el asistente virtual de Proyectos Reches. ¿En qué puedo ayudarte hoy con tu reforma o proyecto?',
+      text: '¡Hola! 👋 Soy el asistente de Proyectos Reches. Pregúntame por nuestros servicios, horarios o pide una cita para tu presupuesto.',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -79,7 +76,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen, isLoading]);
 
-  const addBotMessage = (text: string, type: 'text' | 'button' | 'error' = 'text', actionLabel?: string, actionUrl?: string) => {
+  const addBotMessage = (text: string, type: 'text' | 'button' | 'error' | 'info' = 'text', actionLabel?: string, actionUrl?: string) => {
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'model',
@@ -111,6 +108,30 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
     }
   };
 
+  // --- LOCAL KNOWLEDGE BASE (FALLBACK) ---
+  // Esta función responde cuando la IA falla o no hay API Key
+  const getLocalResponse = (text: string): string | null => {
+    const lowerText = text.toLowerCase();
+
+    if (lowerText.includes('horario') || lowerText.includes('hora') || lowerText.includes('abierto')) {
+      return "Nuestro horario de atención es de Lunes a Viernes de 9:00 a 18:00 horas.";
+    }
+    if (lowerText.includes('donde') || lowerText.includes('ubicacion') || lowerText.includes('direccion') || lowerText.includes('calle')) {
+      return "Nos encontramos en Carrer de Dante Alighieri 133, Horta-Guinardó, 08032 Barcelona.";
+    }
+    if (lowerText.includes('telefono') || lowerText.includes('llamar') || lowerText.includes('movil') || lowerText.includes('contacto')) {
+      return "Puedes contactarnos directamente al teléfono +34 667 08 54 43 o escribirnos a proyectosreches@gmail.com";
+    }
+    if (lowerText.includes('servicio') || lowerText.includes('haceis') || lowerText.includes('reforma') || lowerText.includes('trabajo')) {
+      return "Realizamos reformas integrales, climatización, instalaciones eléctricas, fontanería, albañilería y mantenimiento para empresas y particulares.";
+    }
+    if (lowerText.includes('precio') || lowerText.includes('coste') || lowerText.includes('cuanto vale') || lowerText.includes('presupuesto')) {
+      return "Cada proyecto es único. Para darte un precio exacto necesitamos evaluar tu caso. Te animo a pedir una cita gratuita con nosotros.";
+    }
+    
+    return null; // Si no hay coincidencia, devuelve null
+  };
+
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!inputValue.trim() || isLoading) return;
@@ -130,8 +151,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
     setInputValue('');
     setIsLoading(true);
 
-    // --- INTERCEPTION LOGIC (State Machine) ---
-    // Esta lógica funciona localmente sin API Key
+    // 1. INTERCEPTION LOGIC (Citas - Prioridad Alta)
     if (bookingStep !== 'idle' || /cita|agendar|reunión|llamada|hablar con alguien|consultoría|reservar/i.test(userText)) {
         if (bookingStep === 'asking_name') {
             setTimeout(() => {
@@ -168,56 +188,55 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
         }
     }
 
-    // --- GOOGLE GENAI LOGIC ---
+    // 2. GOOGLE GENAI LOGIC (Con Fallback Local)
     try {
-      // Intenta obtener la API key de múltiples fuentes
       const apiKey = process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY || '';
       
-      // Inicializamos el cliente. Si la key está vacía, fallará al llamar a generateContent, no aquí.
       const ai = new GoogleGenAI({ apiKey });
       
-      // Construct contents properly preserving history
-      // EXCLUDING 'welcome' and 'error' messages to keep context clean
       const contents: Content[] = messages
-        .filter(m => m.id !== 'welcome' && m.type !== 'error')
+        .filter(m => m.id !== 'welcome' && m.type !== 'error' && m.type !== 'info')
         .map(m => {
           return {
               role: m.role,
               parts: [{ text: m.text }]
           };
       });
-      
-      // Add current turn
       contents.push({ role: 'user', parts: [{ text: userText }] });
 
+      // Usamos gemini-2.5-flash por ser más estable y rápido para chats simples
+      // Eliminamos thinkingConfig para evitar errores 400 en cuentas gratuitas o claves limitadas
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-2.5-flash',
         contents: contents,
         config: {
             systemInstruction: SYSTEM_INSTRUCTION,
-            thinkingConfig: { thinkingBudget: 32768 }
         }
       });
 
-      const responseText = response.text || "Lo siento, no tengo respuesta para eso ahora mismo.";
-      addBotMessage(responseText);
+      const responseText = response.text;
+      
+      if (responseText) {
+          addBotMessage(responseText);
+      } else {
+          throw new Error("Respuesta vacía de la IA");
+      }
       
     } catch (error: any) {
-      console.error("Chat error details:", error);
+      console.error("Fallo IA, usando fallback local:", error);
       
-      let errorMessage = "Lo siento, estoy teniendo problemas de conexión. Por favor, intenta usar la palabra 'cita' para hablar con el equipo.";
-      
-      // Diagnóstico más preciso pero mensaje suave al usuario
-      if (error.message?.includes("API key") || error.status === 400) {
-        // Si falla la API, sugerimos la acción manual que sabemos que funciona
-        errorMessage = "Estoy actualizando mis sistemas. Si quieres un presupuesto, escribe 'cita' y te atenderemos manualmente.";
-      } else if (error.status === 429) {
-          errorMessage = "Estoy recibiendo muchas consultas. Por favor espera un momento.";
-      } else if (error.status === 503) {
-          errorMessage = "El servicio está temporalmente saturado.";
-      }
+      // 3. FALLBACK LOCAL INTELIGENTE
+      // Si la IA falla, intentamos responder con la base de conocimiento local
+      const localReply = getLocalResponse(userText);
 
-      addBotMessage(errorMessage, 'error');
+      if (localReply) {
+          // Si encontramos una respuesta local válida, la enviamos como si nada hubiera pasado
+          // Usamos type 'info' para indicar visualmente (opcionalmente) que es una respuesta automática
+          setTimeout(() => addBotMessage(localReply), 500);
+      } else {
+          // Si no sabemos qué decir y la IA falló
+          addBotMessage("Disculpa, estamos haciendo cambios de software. Si quieres un presupuesto o hablar con el equipo, escribe 'cita' y te atenderemos manualmente.", 'error');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -272,6 +291,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
                     }`}
                   >
                     {msg.type === 'error' && <AlertTriangle size={16} className="inline mr-2 -mt-0.5" />}
+                    {msg.type === 'info' && <Info size={16} className="inline mr-2 -mt-0.5 text-blue-500" />}
                     {msg.text}
 
                     {msg.type === 'button' && msg.actionUrl && (
@@ -300,7 +320,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
                   <div className="bg-white p-3 rounded-lg rounded-tl-none shadow-sm flex items-center space-x-2 text-slate-500 text-xs">
                     <Loader2 size={14} className="animate-spin text-brand-primary" />
-                    <span>Pensando...</span>
+                    <span>Escribiendo...</span>
                   </div>
                 </motion.div>
               )}
