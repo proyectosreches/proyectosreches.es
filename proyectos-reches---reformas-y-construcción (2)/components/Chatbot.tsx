@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, Calendar, ChevronRight, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Calendar, ChevronRight, Loader2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GoogleGenAI, Content, Part } from "@google/genai";
+import { GoogleGenAI, Content } from "@google/genai";
 
 // URL de tu backend en Google Sheets
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyc9Z7_Is7KxxO8JMVeBJP2p2wK-tUZNe9MAIXSWha-e7vGS3i2EdcwfHsRHFp45vLACA/exec';
@@ -32,7 +32,7 @@ interface Message {
   role: 'user' | 'model';
   text: string;
   time?: string;
-  type?: 'text' | 'button';
+  type?: 'text' | 'button' | 'error';
   actionUrl?: string;
   actionLabel?: string;
 }
@@ -79,7 +79,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen, isLoading]);
 
-  const addBotMessage = (text: string, type: 'text' | 'button' = 'text', actionLabel?: string, actionUrl?: string) => {
+  const addBotMessage = (text: string, type: 'text' | 'button' | 'error' = 'text', actionLabel?: string, actionUrl?: string) => {
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'model',
@@ -169,16 +169,17 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
 
     // --- GOOGLE GENAI LOGIC ---
     try {
+      // Check for API Key presence
       if (!process.env.API_KEY) {
-        throw new Error("API Key missing");
+        throw new Error("API Key no configurada. Verifica tu archivo .env");
       }
 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // Construct contents, EXCLUDING the initial welcome message from the history
-      // to ensure the conversation starts with a 'user' role as preferred by the API.
+      // Construct contents properly preserving history
+      // EXCLUDING 'welcome' and 'error' messages to keep context clean
       const contents: Content[] = messages
-        .filter(m => m.id !== 'welcome') // Filter out the initial bot welcome message
+        .filter(m => m.id !== 'welcome' && m.type !== 'error')
         .map(m => {
           return {
               role: m.role,
@@ -186,23 +187,34 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
           };
       });
       
-      // Add current turn (User)
+      // Add current turn
       contents.push({ role: 'user', parts: [{ text: userText }] });
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-pro-preview',
         contents: contents,
         config: {
             systemInstruction: SYSTEM_INSTRUCTION,
+            thinkingConfig: { thinkingBudget: 32768 }
         }
       });
 
       const responseText = response.text || "Lo siento, no tengo respuesta para eso ahora mismo.";
       addBotMessage(responseText);
       
-    } catch (error) {
-      console.error("Chat error details:", error);
-      addBotMessage("Hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.");
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      let errorMessage = "Hubo un error al procesar tu solicitud.";
+      
+      if (error.message?.includes("API Key")) {
+        errorMessage = "Error de configuración: API Key no encontrada.";
+      } else if (error.status === 400) {
+        errorMessage = "Lo siento, no pude entender el contexto. ¿Podemos empezar de nuevo?";
+      } else if (error.status === 429) {
+          errorMessage = "Estoy recibiendo muchas consultas. Por favor espera un momento.";
+      }
+
+      addBotMessage(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -229,7 +241,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
                   <h3 className="font-bold text-base">Proyectos Reches AI</h3>
                   <p className="text-xs text-white/90 flex items-center">
                      <span className="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
-                     En línea
+                     En línea (Pro)
                   </p>
                 </div>
               </div>
@@ -251,9 +263,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
                     className={`max-w-[85%] p-3 rounded-lg text-sm leading-relaxed shadow-[0_1px_2px_rgba(0,0,0,0.1)] relative ${
                       msg.role === 'user' 
                         ? 'bg-[#d9fdd3] text-slate-900 rounded-tr-none' 
-                        : 'bg-white text-slate-800 rounded-tl-none'
+                        : msg.type === 'error' 
+                            ? 'bg-red-50 text-red-600 border border-red-200 rounded-tl-none' 
+                            : 'bg-white text-slate-800 rounded-tl-none'
                     }`}
                   >
+                    {msg.type === 'error' && <AlertTriangle size={16} className="inline mr-2 -mt-0.5" />}
                     {msg.text}
 
                     {msg.type === 'button' && msg.actionUrl && (
@@ -282,7 +297,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
                   <div className="bg-white p-3 rounded-lg rounded-tl-none shadow-sm flex items-center space-x-2 text-slate-500 text-xs">
                     <Loader2 size={14} className="animate-spin text-brand-primary" />
-                    <span>Escribiendo...</span>
+                    <span>Pensando...</span>
                   </div>
                 </motion.div>
               )}
