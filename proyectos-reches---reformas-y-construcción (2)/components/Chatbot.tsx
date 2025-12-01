@@ -131,6 +131,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
     setIsLoading(true);
 
     // --- INTERCEPTION LOGIC (State Machine) ---
+    // Esta lógica funciona localmente sin API Key
     if (bookingStep !== 'idle' || /cita|agendar|reunión|llamada|hablar con alguien|consultoría|reservar/i.test(userText)) {
         if (bookingStep === 'asking_name') {
             setTimeout(() => {
@@ -169,15 +170,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
 
     // --- GOOGLE GENAI LOGIC ---
     try {
-      const apiKey = process.env.API_KEY;
+      // Intenta obtener la API key de múltiples fuentes
+      const apiKey = process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY || '';
       
-      if (!apiKey) {
-        // Log para depuración pero intentamos continuar o mostrar un error más suave
-        console.warn("API Key no detectada en process.env.API_KEY. Verifica vite.config.ts");
-      }
-
-      // Inicializamos incluso si apiKey es undefined para dejar que el SDK maneje el error internamente si es necesario
-      const ai = new GoogleGenAI({ apiKey: apiKey || '' });
+      // Inicializamos el cliente. Si la key está vacía, fallará al llamar a generateContent, no aquí.
+      const ai = new GoogleGenAI({ apiKey });
       
       // Construct contents properly preserving history
       // EXCLUDING 'welcome' and 'error' messages to keep context clean
@@ -206,14 +203,16 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
       addBotMessage(responseText);
       
     } catch (error: any) {
-      console.error("Chat error:", error);
-      let errorMessage = "Hubo un error técnico. Por favor, intenta preguntar de otra forma.";
+      console.error("Chat error details:", error);
       
-      // Mensajes de error más amigables
-      if (error.message?.includes("API key")) {
-        errorMessage = "El sistema de IA está en mantenimiento (Falta API Key).";
+      let errorMessage = "Lo siento, estoy teniendo problemas de conexión. Por favor, intenta usar la palabra 'cita' para hablar con el equipo.";
+      
+      // Diagnóstico más preciso pero mensaje suave al usuario
+      if (error.message?.includes("API key") || error.status === 400) {
+        // Si falla la API, sugerimos la acción manual que sabemos que funciona
+        errorMessage = "Estoy actualizando mis sistemas. Si quieres un presupuesto, escribe 'cita' y te atenderemos manualmente.";
       } else if (error.status === 429) {
-          errorMessage = "Estoy recibiendo demasiadas consultas. Dame un minuto.";
+          errorMessage = "Estoy recibiendo muchas consultas. Por favor espera un momento.";
       } else if (error.status === 503) {
           errorMessage = "El servicio está temporalmente saturado.";
       }
