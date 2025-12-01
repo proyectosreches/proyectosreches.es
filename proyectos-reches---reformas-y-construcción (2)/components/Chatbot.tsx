@@ -169,12 +169,15 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
 
     // --- GOOGLE GENAI LOGIC ---
     try {
-      // Check for API Key presence
-      if (!process.env.API_KEY) {
-        throw new Error("API Key no configurada. Verifica tu archivo .env");
+      const apiKey = process.env.API_KEY;
+      
+      if (!apiKey) {
+        // Log para depuración pero intentamos continuar o mostrar un error más suave
+        console.warn("API Key no detectada en process.env.API_KEY. Verifica vite.config.ts");
       }
 
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // Inicializamos incluso si apiKey es undefined para dejar que el SDK maneje el error internamente si es necesario
+      const ai = new GoogleGenAI({ apiKey: apiKey || '' });
       
       // Construct contents properly preserving history
       // EXCLUDING 'welcome' and 'error' messages to keep context clean
@@ -204,14 +207,15 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
       
     } catch (error: any) {
       console.error("Chat error:", error);
-      let errorMessage = "Hubo un error al procesar tu solicitud.";
+      let errorMessage = "Hubo un error técnico. Por favor, intenta preguntar de otra forma.";
       
-      if (error.message?.includes("API Key")) {
-        errorMessage = "Error de configuración: API Key no encontrada.";
-      } else if (error.status === 400) {
-        errorMessage = "Lo siento, no pude entender el contexto. ¿Podemos empezar de nuevo?";
+      // Mensajes de error más amigables
+      if (error.message?.includes("API key")) {
+        errorMessage = "El sistema de IA está en mantenimiento (Falta API Key).";
       } else if (error.status === 429) {
-          errorMessage = "Estoy recibiendo muchas consultas. Por favor espera un momento.";
+          errorMessage = "Estoy recibiendo demasiadas consultas. Dame un minuto.";
+      } else if (error.status === 503) {
+          errorMessage = "El servicio está temporalmente saturado.";
       }
 
       addBotMessage(errorMessage, 'error');
@@ -241,7 +245,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
                   <h3 className="font-bold text-base">Proyectos Reches AI</h3>
                   <p className="text-xs text-white/90 flex items-center">
                      <span className="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
-                     En línea (Pro)
+                     En línea
                   </p>
                 </div>
               </div>
