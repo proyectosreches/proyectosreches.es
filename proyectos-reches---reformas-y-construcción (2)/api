@@ -1,0 +1,32 @@
+// --- GOOGLE GENAI LOGIC ---
+try {
+  // 1. Construimos el historial de mensajes para enviarlo al backend
+  const contents: Content[] = messages.map(m => ({
+      role: m.role,
+      parts: [{ text: m.text }]
+  }));
+  // 2. Añadimos el turno actual
+  contents.push({ role: 'user', parts: [{ text: userText }] });
+
+  // 3. ¡Llamamos a nuestra nueva API Route segura!
+  const apiResponse = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents }), // Enviamos el historial
+  });
+
+  if (!apiResponse.ok) {
+      throw new Error("API Route failed");
+  }
+
+  const data = await apiResponse.json();
+  const responseText = data.text || "Lo siento, no tengo respuesta para eso ahora mismo.";
+
+  addBotMessage(responseText);
+
+} catch (error) {
+  console.error("Chat error:", error);
+  addBotMessage("Hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.");
+} finally {
+  setIsLoading(false);
+}
