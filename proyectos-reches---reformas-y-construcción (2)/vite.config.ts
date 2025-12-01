@@ -5,6 +5,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   // Carga todas las variables de entorno, incluyendo la API_KEY
   const env = loadEnv(mode, process.cwd(), '');
+  
+  // Buscar la API Key en varias variables posibles para asegurar compatibilidad
+  const apiKey = env.API_KEY || env.VITE_API_KEY || process.env.API_KEY;
 
   return {
     plugins: [react()],
@@ -17,9 +20,9 @@ export default defineConfig(({ mode }) => {
       host: true
     },
     base: '/',
-    // Define process.env.API_KEY globalmente para que el navegador pueda leerla
+    // Define process.env.API_KEY globalmente con la clave encontrada
     define: {
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      'process.env.API_KEY': JSON.stringify(apiKey)
     }
   };
 });
