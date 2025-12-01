@@ -175,15 +175,18 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // Construct contents properly preserving history
-      const contents: Content[] = messages.map(m => {
+      // Construct contents, EXCLUDING the initial welcome message from the history
+      // to ensure the conversation starts with a 'user' role as preferred by the API.
+      const contents: Content[] = messages
+        .filter(m => m.id !== 'welcome') // Filter out the initial bot welcome message
+        .map(m => {
           return {
               role: m.role,
               parts: [{ text: m.text }]
           };
       });
       
-      // Add current turn
+      // Add current turn (User)
       contents.push({ role: 'user', parts: [{ text: userText }] });
 
       const response = await ai.models.generateContent({
@@ -198,7 +201,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onToggle }) => {
       addBotMessage(responseText);
       
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error("Chat error details:", error);
       addBotMessage("Hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.");
     } finally {
       setIsLoading(false);
