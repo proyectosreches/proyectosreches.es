@@ -1,147 +1,137 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { ShieldCheck, Heart, Clock, Ruler, Award, ArrowRight } from 'lucide-react';
+import { Users, Ruler, FileText, ShieldCheck, FileSignature, CheckCircle2, HardHat } from 'lucide-react';
 import { Reveal } from './Reveal';
 import Button from './Button';
 
-const values = [
-  {
-    icon: Heart,
-    title: "Cercanía y Familia",
-    desc: "Tratamos cada hogar como si fuera el nuestro. Sin intermediarios fríos, con trato directo."
-  },
-  {
-    icon: Ruler,
-    title: "Precisión Técnica",
-    desc: "Atención obsesiva al detalle. Desde el primer plano hasta el último remate."
-  },
-  {
-    icon: ShieldCheck,
-    title: "Transparencia Total",
-    desc: "Presupuestos desglosados partida por partida. Sin sorpresas ni letra pequeña."
-  }
-];
-
 interface AboutUsProps {
-    onOpenModal: () => void;
+  onOpenModal: () => void;
 }
 
 const AboutUs: React.FC<AboutUsProps> = ({ onOpenModal }) => {
   return (
-    <section id="nosotros" className="py-24 bg-white overflow-hidden scroll-mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="nosotros" className="py-24 bg-white relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* --- HERO SECTION --- */}
-        <div className="flex flex-col lg:flex-row items-center gap-16 mb-24">
-          {/* Text Side */}
+        {/* Parte Superior: Texto e Imagen */}
+        <div className="flex flex-col lg:flex-row items-center gap-16 mb-20">
+          
+          {/* Texto Principal */}
           <div className="w-full lg:w-1/2">
-            <Reveal>
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-brand-primary text-xs font-bold tracking-widest uppercase mb-6">
-                Sobre Nosotros
+            <Reveal width="100%">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-6">
+                <span className="mr-2">★</span> Sobre Nosotros
               </div>
               <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">
                 Reformas hechas por <br/>
-                <span className="text-brand-primary">personas reales</span> para mejorar tu vida.
+                <span className="text-brand-primary">personas reales</span> para <br/>
+                mejorar tu vida.
               </h2>
-              <p className="text-lg text-slate-600 mb-6 leading-relaxed">
-                En <strong>Proyectos Reches</strong>, no solo movemos tabiques; creamos espacios donde la vida sucede. Nacimos como una pequeña empresa familiar en Barcelona y hemos crecido gracias a una premisa simple: <strong>cumplir lo que prometemos</strong>.
-              </p>
-              <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                Entendemos que una obra puede ser estresante. Por eso, nuestro trabajo no es solo construir, sino darte tranquilidad. Nos encargamos de todo, desde los permisos hasta la limpieza final.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex items-center gap-3 text-slate-700 font-medium">
-                    <div className="p-2 bg-slate-100 rounded-lg text-brand-primary"><Clock size={20}/></div>
-                    <span>Plazos Garantizados</span>
-                </div>
-                 <div className="flex items-center gap-3 text-slate-700 font-medium">
-                    <div className="p-2 bg-slate-100 rounded-lg text-brand-primary"><ShieldCheck size={20}/></div>
-                    <span>Seguro R.C. Incluido</span>
-                </div>
+              <div className="space-y-6 text-lg text-slate-600 leading-relaxed">
+                <p>
+                  En <strong>Proyectos Reches</strong>, no solo movemos tabiques; creamos espacios donde la vida sucede. Nacimos como una pequeña empresa familiar en Barcelona y hemos crecido gracias a una premisa simple: <strong>cumplir lo que prometemos.</strong>
+                </p>
+                <p>
+                  Entendemos que una obra puede ser estresante. Por eso, nuestro trabajo no es solo construir, sino darte tranquilidad. Nos encargamos de todo, desde los permisos hasta la limpieza final.
+                </p>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-4">
+                 <div className="flex items-center text-slate-700 font-medium bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
+                    <CheckCircle2 className="text-green-500 mr-2 h-5 w-5" />
+                    Plazos Garantizados
+                 </div>
+                 <div className="flex items-center text-slate-700 font-medium bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
+                    <CheckCircle2 className="text-green-500 mr-2 h-5 w-5" />
+                    Seguro R.C. Incluido
+                 </div>
               </div>
             </Reveal>
           </div>
 
-          {/* Image Side */}
+          {/* Imagen Lateral */}
           <div className="w-full lg:w-1/2 relative">
-            <Reveal delay={0.2} direction="left">
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
+             <Reveal width="100%" delay={0.2}>
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
                     <img 
-                        src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2000&auto=format&fit=crop" 
-                        alt="Obra de reforma integral en proceso" 
-                        className="w-full h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
+                        src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1470&auto=format&fit=crop" 
+                        alt="Equipo trabajando en obra" 
+                        className="w-full h-auto object-cover transform hover:scale-105 transition-transform duration-700"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
-                    
-                    {/* Floating Badge */}
-                    <motion.div 
-                        initial={{ y: 20, opacity: 0 }}
-                        whileInView={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                        className="absolute bottom-8 left-8 bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-lg border-l-4 border-brand-primary max-w-xs"
-                    >
-                        <p className="font-serif italic text-slate-800 text-lg mb-2">"La excelencia no es un acto, es un hábito en cada detalle."</p>
-                    </motion.div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900/80 to-transparent p-8">
+                        <p className="text-white text-xl font-serif italic border-l-4 border-brand-primary pl-4">
+                            "La excelencia no es un acto, es un hábito en cada detalle."
+                        </p>
+                    </div>
                 </div>
                 {/* Decorative Pattern */}
-                <div className="absolute -z-10 -top-6 -right-6 w-32 h-32 bg-amber-50 rounded-full blur-2xl"></div>
-                <div className="absolute -z-10 -bottom-6 -left-6 w-40 h-40 bg-slate-100 rounded-full blur-2xl"></div>
-            </Reveal>
+                <div className="absolute -z-10 top-10 -right-10 w-full h-full bg-slate-100 rounded-3xl"></div>
+             </Reveal>
           </div>
         </div>
 
-        {/* --- VALUES SECTION --- */}
-        <Reveal width="100%" className="mb-24">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {values.map((val, i) => (
-                    <motion.div 
-                        key={i}
-                        whileHover={{ y: -8, transition: { type: "spring", stiffness: 300 } }}
-                        className="p-8 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-white hover:shadow-xl hover:border-brand-primary/20 transition-colors duration-300"
-                    >
-                        <div className="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-brand-primary mb-6 ring-1 ring-slate-100">
-                            <val.icon size={28} />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-3">{val.title}</h3>
-                        <p className="text-slate-600 leading-relaxed">
-                            {val.desc}
-                        </p>
-                    </motion.div>
-                ))}
+        {/* Grid de Valores */}
+        <Reveal width="100%" delay={0.3}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+                {/* Card 1 */}
+                <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 hover:shadow-lg transition-all duration-300 group">
+                    <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm mb-6 text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors">
+                        <Users size={28} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">Cercanía y Familia</h3>
+                    <p className="text-slate-600">Tratamos cada hogar como si fuera el nuestro. Sin intermediarios fríos, con trato directo.</p>
+                </div>
+
+                 {/* Card 2 */}
+                 <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 hover:shadow-lg transition-all duration-300 group">
+                    <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm mb-6 text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors">
+                        <Ruler size={28} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">Precisión Técnica</h3>
+                    <p className="text-slate-600">Atención obsesiva al detalle. Desde el primer plano hasta el último remate.</p>
+                </div>
+
+                 {/* Card 3 */}
+                 <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 hover:shadow-lg transition-all duration-300 group">
+                    <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm mb-6 text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors">
+                        <FileText size={28} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">Transparencia Total</h3>
+                    <p className="text-slate-600">Presupuestos desglosados partida por partida. Sin sorpresas ni letra pequeña.</p>
+                </div>
             </div>
         </Reveal>
 
-        {/* --- GUARANTEES & CTA --- */}
-        <div className="bg-slate-900 rounded-3xl p-8 md:p-12 relative overflow-hidden">
-            {/* Background Texture */}
-            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-            
-            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                <div className="text-white max-w-2xl">
-                    <div className="flex items-center gap-2 mb-4 text-amber-400">
-                        <Award size={24} />
-                        <span className="font-bold tracking-wide uppercase">Garantía de Calidad</span>
-                    </div>
-                    <h3 className="text-3xl font-bold mb-4">¿Hablamos de tu futuro proyecto?</h3>
-                    <p className="text-slate-300 mb-6">
-                        Ofrecemos garantía por escrito de 2 años en todas nuestras reformas y cumplimiento estricto de normativas CTE.
-                    </p>
-                    <div className="flex flex-wrap gap-4 text-sm font-medium text-slate-400">
-                        <span className="flex items-center gap-1"><ShieldCheck size={16} className="text-green-400"/> Contrato Legal</span>
-                        <span className="flex items-center gap-1"><ShieldCheck size={16} className="text-green-400"/> Factura Detallada</span>
-                        <span className="flex items-center gap-1"><ShieldCheck size={16} className="text-green-400"/> Gestión de Licencias</span>
-                    </div>
-                </div>
+        {/* Caja de Garantía (Estilo Video) */}
+        <Reveal width="100%" delay={0.4}>
+            <div className="bg-slate-900 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-2xl">
+                {/* Fondo decorativo */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                 
-                <div className="shrink-0">
-                    <Button variant="primary" className="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 text-lg shadow-lg shadow-amber-900/20" onClick={onOpenModal}>
-                        Contactar con el Equipo
-                        <ArrowRight className="ml-2" />
-                    </Button>
+                <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
+                    <div className="flex-1">
+                        <div className="flex items-center mb-4 text-brand-primary font-bold tracking-wider text-sm uppercase">
+                            <ShieldCheck className="mr-2" /> Garantía de Calidad
+                        </div>
+                        <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                            ¿Hablamos de tu futuro proyecto?
+                        </h3>
+                        <p className="text-slate-300 text-lg mb-6 max-w-2xl">
+                            Ofrecemos garantía por escrito de 2 años en todas nuestras reformas y cumplimiento estricto de normativas CTE.
+                        </p>
+                        <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                             <span className="flex items-center"><FileSignature size={16} className="mr-1" /> Contrato Legal</span>
+                             <span className="flex items-center"><FileText size={16} className="mr-1" /> Factura Detallada</span>
+                             <span className="flex items-center"><HardHat size={16} className="mr-1" /> Gestión de Licencias</span>
+                        </div>
+                    </div>
+                    <div className="shrink-0">
+                        <Button variant="primary" onClick={onOpenModal} className="px-8 py-4 text-lg">
+                            Contactar con el Equipo
+                        </Button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Reveal>
 
       </div>
     </section>
